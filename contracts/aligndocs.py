@@ -116,6 +116,39 @@ class AlignDocs(gl.Contract):
             return {"found": False}
         return {"found": True, "id": str(int(stored) - 1)}
 
+    @gl.public.view
+    def list_by_label(self, label: str) -> typing.Any:
+        wanted = str(label).strip().lower()
+        if wanted not in VALID_LABELS:
+            raise gl.vm.UserError("label must be aligned, contradicts, outdated, or off_topic")
+        ids = []
+        n = int(self.next_id)
+        i = 0
+        while i < n:
+            c = self.cases[i]
+            if bool(c.resolved) and str(c.label) == wanted:
+                ids.append(str(i))
+            i += 1
+        return {"label": wanted, "ids": ids, "count": str(len(ids))}
+
+    @gl.public.view
+    def list_resolved(self) -> typing.Any:
+        rows = []
+        n = int(self.next_id)
+        i = 0
+        while i < n:
+            c = self.cases[i]
+            if bool(c.resolved):
+                rows.append(
+                    {
+                        "id": str(i),
+                        "label": str(c.label),
+                        "article_url": str(c.article_url),
+                    }
+                )
+            i += 1
+        return {"count": str(len(rows)), "cases": rows}
+
     @gl.public.write
     def submit(self, article_url: str, docs_url: str) -> u256:
         if not _ok_url(article_url):
