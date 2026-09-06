@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlignDocs</title>
+  <style>
+    body { font-family: sans-serif; max-width: 720px; margin: 32px auto; padding: 0 16px; }
+    code, input { font-family: ui-monospace, monospace; }
+    input { width: 100%; box-sizing: border-box; margin: 6px 0 14px; padding: 8px; }
+    .card { border: 1px solid #ccc; padding: 12px 14px; margin: 10px 0; }
+    .ok { color: #0a7; }
+  </style>
+</head>
+<body>
+  <h1>AlignDocs</h1>
+  <p>Compare a public article to official GenLayer docs. Validators store one label: aligned, contradicts, outdated, off_topic.</p>
+  <p>Contract (Studio): <code>0x422961567DCEEcd4CD4CC4Fd7f75239eC3884De8</code></p>
+  <p>Writes run in <a href="https://studio.genlayer.com">GenLayer Studio</a> → submit / resolve. This page is the public readme UI + verified cases.</p>
+
+  <h2>Submit pair (copy into Studio)</h2>
+  <label>article_url</label>
+  <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
+  <label>docs_url</label>
+  <input id="docs" value="https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer" />
+
+  <h2>Verified on this contract</h2>
+  <div class="card"><b>0 contradicts</b> — samples/contradicts.md</div>
+  <div class="card"><b>1 aligned</b> — samples/aligned.md</div>
+  <div class="card"><b>2 outdated</b> — samples/outdated.md</div>
+  <div class="card"><b>3 off_topic</b> — samples/off_topic.md</div>
+  <p class="ok">list_by_label + list_resolved shipped in this build.</p>
+  <p><a href="https://github.com/bearbaba/AlignDocs">Source</a></p>
+</body>
+</html>
