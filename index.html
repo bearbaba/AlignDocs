@@ -7,8 +7,8 @@
   <script type="importmap">
   {
     "imports": {
-      "genlayer-js": "https://esm.sh/genlayer-js@0.24.0",
-      "genlayer-js/chains": "https://esm.sh/genlayer-js@0.24.0/chains"
+      "genlayer-js": "https://esm.sh/genlayer-js@latest",
+      "genlayer-js/chains": "https://esm.sh/genlayer-js@latest/chains"
     }
   }
   </script>
@@ -21,7 +21,6 @@
       --muted: #9aa3c7;
       --accent: #7c5cff;
       --accent2: #2ee9a6;
-      --warn: #ffb020;
       --bad: #ff6b7a;
     }
     * { box-sizing: border-box; }
@@ -69,7 +68,7 @@
     .ok { color: var(--accent2); }
     .err { color: var(--bad); }
     .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #223; color: var(--accent2); font-size: 12px; }
-    a { color: #9db6ff; }
+    code { font-size: 12px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -127,17 +126,16 @@
 
   <script type="module">
     import { createClient } from "genlayer-js";
+    import { studioDevnet } from "genlayer-js/chains";
 
     const CONTRACT = "0x3681aC016717f269D1bF1D6347816D027A6148FC";
-    const FALLBACK_CHAIN = {
-      id: 61997,
+    const chain = {
+      ...studioDevnet,
       name: "GenLayer Studio Next",
-      rpcUrls: { default: { http: ["https://studio-next.genlayer.com/api"] } },
-      nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+      rpcUrls: { default: { http: ["https://studio-dev.genlayer.com/api"] } },
     };
 
     let client;
-    let account;
     const out = document.getElementById("out");
     const status = document.getElementById("status");
     const log = (x, cls) => {
@@ -150,16 +148,9 @@
       }
     };
 
-    async function chainDef() {
-      try {
-        const chains = await import("genlayer-js/chains");
-        return chains.studioDevnet || chains.studioNext || FALLBACK_CHAIN;
-      } catch {
-        return FALLBACK_CHAIN;
-      }
-    }
-
-    async function addNetwork() {
+    async function ready() {
+      if (!window.ethereum) throw new Error("Cài MetaMask trên trình duyệt này");
+      const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
       try {
         await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0xF20D" }] });
       } catch (e) {
@@ -170,21 +161,11 @@
               chainId: "0xF20D",
               chainName: "GenLayer Studio Next",
               nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-              rpcUrls: ["https://studio-next.genlayer.com/api"],
+              rpcUrls: ["https://studio-dev.genlayer.com/api"],
             }],
           });
-        } else if (e.code !== 4001) {
-          throw e;
         }
       }
-    }
-
-    async function ready() {
-      if (!window.ethereum) throw new Error("Cài MetaMask trên trình duyệt này");
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      account = accounts[0];
-      await addNetwork();
-      const chain = await chainDef();
       client = createClient({ chain, account, provider: window.ethereum });
       try { await client.connect("studio-dev"); } catch (_) {}
       status.innerHTML = '<span class="ok">Đã kết nối</span><br>' + account.slice(0, 6) + "…" + account.slice(-4) + " · chain 61997";
@@ -192,67 +173,39 @@
     }
 
     function caseIdArg() {
-      const raw = document.getElementById("caseId").value.trim() || "0";
-      return BigInt(raw);
-    }
-
-    async function withFees(write) {
-      const payload = { ...write };
-      try {
-        const estimate = await client.estimateTransactionFeesForWrite(write);
-        if (estimate && estimate.feeValue != null && estimate.distribution) {
-          payload.fees = {
-            distribution: estimate.distribution,
-            feeValue: estimate.feeValue,
-          };
-          if (estimate.messageAllocations) payload.fees.messageAllocations = estimate.messageAllocations;
-        }
-      } catch (e) {
-        try {
-          const estimate = await client.estimateTransactionFees({
-            leaderTimeunitsAllocation: 125n,
-            validatorTimeunitsAllocation: 250n,
-            executionBudgetPerRound: 786500n,
-            totalMessageFees: 0n,
-            appealRounds: 1n,
-            rotations: [1n, 1n],
-          });
-          if (estimate && estimate.feeValue != null) {
-            payload.fees = { distribution: estimate.distribution, feeValue: estimate.feeValue };
-          }
-        } catch (_) {}
-      }
-      return payload;
+      return BigInt(document.getElementById("caseId").value.trim() || "0");
     }
 
     async function sendWrite(functionName, args) {
       const c = client || await ready();
-      const write = { address: CONTRACT, functionName, args };
-      const payload = await withFees(write);
-      const txId = await c.writeContract(payload);
-      log({ status: "Đã gửi tx, đang chờ…", txId });
+      const write = { address: CONTRACT, functionName, args, value: 0n };
+      try {
+        const estimate = await c.estimateTransactionFeesForWrite(write);
+        if (estimate && estimate.feeValue != null && estimate.distribution) {
+          write.fees = { distribution: estimate.distribution, feeValue: estimate.feeValue };
+        }
+      } catch (_) {}
+      const txId = await c.writeContract(write);
       await c.waitForDecision({ hash: txId }).catch(() => {});
       return txId;
     }
 
-    document.getElementById("connect").onclick = () => ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
+    document.getElementById("connect").onclick = () =>
+      ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
 
     document.getElementById("submitBtn").onclick = async () => {
       busy(true);
       try {
-        const article = document.getElementById("article").value.trim();
-        const docs = document.getElementById("docs").value.trim();
-        const txId = await sendWrite("submit", [article, docs]);
-        let nextId = document.getElementById("caseId").value.trim();
+        const txId = await sendWrite("submit", [
+          document.getElementById("article").value.trim(),
+          document.getElementById("docs").value.trim(),
+        ]);
         try {
           const count = await client.readContract({ address: CONTRACT, functionName: "case_count", args: [] });
           const n = Number(count);
-          if (Number.isFinite(n) && n > 0) {
-            document.getElementById("caseId").value = String(n - 1);
-            nextId = String(n - 1);
-          }
+          if (n > 0) document.getElementById("caseId").value = String(n - 1);
         } catch (_) {}
-        log({ ok: "Đã submit. Bấm Resolve cho case " + nextId, txId });
+        log({ ok: "Đã submit", txId, caseId: document.getElementById("caseId").value });
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
     };
