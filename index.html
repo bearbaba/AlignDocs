@@ -7,8 +7,7 @@
   <script type="importmap">
   {
     "imports": {
-      "genlayer-js": "https://esm.sh/genlayer-js@0.24.0",
-      "genlayer-js/chains": "https://esm.sh/genlayer-js@0.24.0/chains"
+      "genlayer-js": "https://esm.sh/genlayer-js@0.24.0"
     }
   }
   </script>
@@ -41,25 +40,62 @@
   <pre id="out"></pre>
   <script type="module">
     import { createClient } from "genlayer-js";
-    import { studioDevnet } from "genlayer-js/chains";
+
     const CONTRACT = "0x3681aC016717f269D1bF1D6347816D027A6148FC";
+    const CHAIN = {
+      id: 61997,
+      name: "GenLayer Studio Next",
+      rpcUrls: { default: { http: ["https://studio-next.genlayer.com/api"] } },
+      nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+    };
+
     let client;
     const out = document.getElementById("out");
     const status = document.getElementById("status");
     const log = (x) => { out.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2); };
+
     async function ready() {
-      if (!window.ethereum) throw new Error("Need a browser wallet");
+      if (!window.ethereum) throw new Error("Install MetaMask in this browser");
       const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
-      client = createClient({ chain: studioDevnet, account, provider: window.ethereum });
-      try { await client.connect("studio-dev"); } catch (_) {}
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0xF20D" }],
+        });
+      } catch (e) {
+        if (e.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: "0xF20D",
+              chainName: "GenLayer Studio Next",
+              nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
+              rpcUrls: ["https://studio-next.genlayer.com/api"],
+            }],
+          });
+        } else {
+          throw e;
+        }
+      }
+      client = createClient({ chain: CHAIN, account, provider: window.ethereum });
       status.textContent = "Connected " + account + " @ 61997";
       return client;
     }
-    document.getElementById("connect").onclick = () => ready().catch((e) => { status.className = "err"; status.textContent = e.message; });
+
+    document.getElementById("connect").onclick = () =>
+      ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
+
     document.getElementById("submitBtn").onclick = async () => {
       try {
         const c = client || await ready();
-        const write = { address: CONTRACT, functionName: "submit", args: [document.getElementById("article").value.trim(), document.getElementById("docs").value.trim()] };
+        const write = {
+          address: CONTRACT,
+          functionName: "submit",
+          args: [
+            document.getElementById("article").value.trim(),
+            document.getElementById("docs").value.trim(),
+          ],
+        };
         let payload = write;
         try {
           const estimate = await c.estimateTransactionFeesForWrite(write);
@@ -70,10 +106,15 @@
         log({ submitted: txId });
       } catch (e) { log(String(e)); }
     };
+
     document.getElementById("resolveBtn").onclick = async () => {
       try {
         const c = client || await ready();
-        const write = { address: CONTRACT, functionName: "resolve", args: [document.getElementById("caseId").value.trim()] };
+        const write = {
+          address: CONTRACT,
+          functionName: "resolve",
+          args: [document.getElementById("caseId").value.trim()],
+        };
         let payload = write;
         try {
           const estimate = await c.estimateTransactionFeesForWrite(write);
@@ -81,20 +122,34 @@
         } catch (_) {}
         const txId = await c.writeContract(payload);
         await c.waitForFinalization({ hash: txId }).catch(() => {});
-        const verdict = await c.readContract({ address: CONTRACT, functionName: "get_case", args: [document.getElementById("caseId").value.trim()] });
+        const verdict = await c.readContract({
+          address: CONTRACT,
+          functionName: "get_case",
+          args: [document.getElementById("caseId").value.trim()],
+        });
         log({ resolved: txId, verdict });
       } catch (e) { log(String(e)); }
     };
+
     document.getElementById("readBtn").onclick = async () => {
       try {
         const c = client || await ready();
-        log(await c.readContract({ address: CONTRACT, functionName: "get_case", args: [document.getElementById("caseId").value.trim()] }));
+        log(await c.readContract({
+          address: CONTRACT,
+          functionName: "get_case",
+          args: [document.getElementById("caseId").value.trim()],
+        }));
       } catch (e) { log(String(e)); }
     };
+
     document.getElementById("listBtn").onclick = async () => {
       try {
         const c = client || await ready();
-        log(await c.readContract({ address: CONTRACT, functionName: "list_resolved", args: [] }));
+        log(await c.readContract({
+          address: CONTRACT,
+          functionName: "list_resolved",
+          args: [],
+        }));
       } catch (e) { log(String(e)); }
     };
   </script>
