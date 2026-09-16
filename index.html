@@ -126,11 +126,13 @@
 
   <script type="module">
     import { createClient } from "genlayer-js";
-    import { studioDevnet } from "genlayer-js/chains";
+    import * as chains from "genlayer-js/chains";
 
     const CONTRACT = "0x3681aC016717f269D1bF1D6347816D027A6148FC";
+    const base = chains.studioDevnet || chains.studioNext || chains.studionet || chains.localnet;
     const chain = {
-      ...studioDevnet,
+      ...base,
+      id: 61997,
       name: "GenLayer Studio Next",
       rpcUrls: { default: { http: ["https://studio-dev.genlayer.com/api"] } },
     };
