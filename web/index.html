@@ -1,48 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AlignDocs</title>
+  <title>AlignDocs — Check articles against GenLayer docs</title>
   <script type="importmap">
   {
     "imports": {
-      "genlayer-js": "https://esm.sh/genlayer-js@0.24.0"
+      "genlayer-js": "https://esm.sh/genlayer-js@0.24.0",
+      "genlayer-js/chains": "https://esm.sh/genlayer-js@0.24.0/chains"
     }
   }
   </script>
   <style>
-    body { font-family: sans-serif; max-width: 760px; margin: 32px auto; padding: 0 16px; }
-    input, button { font: inherit; width: 100%; box-sizing: border-box; margin: 6px 0 12px; padding: 8px; }
-    button { cursor: pointer; }
-    pre { white-space: pre-wrap; background: #f6f6f6; padding: 10px; }
-    .err { color: #c00; }
+    :root {
+      --bg: #0b1020;
+      --card: #141a2e;
+      --line: #2a3354;
+      --text: #eef2ff;
+      --muted: #9aa3c7;
+      --accent: #7c5cff;
+      --accent2: #2ee9a6;
+      --warn: #ffb020;
+      --bad: #ff6b7a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, Segoe UI, sans-serif;
+      background:
+        radial-gradient(900px 400px at 10% -10%, #2a1b6b 0%, transparent 50%),
+        radial-gradient(700px 300px at 100% 0%, #0d3b36 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 18px 64px; }
+    .top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+    .logo { font-weight: 800; letter-spacing: .3px; font-size: 28px; }
+    .logo span { color: var(--accent2); }
+    .sub { color: var(--muted); max-width: 640px; line-height: 1.5; margin-top: 8px; }
+    .wallet { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 260px; }
+    .wallet b { display: block; font-size: 13px; color: var(--muted); font-weight: 600; }
+    button {
+      border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; cursor: pointer;
+      background: linear-gradient(180deg, #8d71ff, var(--accent)); color: white;
+    }
+    button.ghost { background: #20284a; color: var(--text); }
+    button:disabled { opacity: .55; cursor: wait; }
+    .grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; margin-top: 22px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+    h2 { margin: 0 0 8px; font-size: 18px; }
+    p.hint { color: var(--muted); font-size: 14px; line-height: 1.45; margin: 0 0 14px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    input {
+      width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line);
+      background: #0f1528; color: var(--text);
+    }
+    .steps { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+    .step { flex: 1; min-width: 140px; background: #0f1528; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+    .step b { display: block; color: var(--accent2); font-size: 12px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .row button { flex: 1; min-width: 140px; }
+    pre {
+      background: #0a0f1e; border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px; white-space: pre-wrap; color: #d7def7; min-height: 90px; font-size: 13px;
+    }
+    .ok { color: var(--accent2); }
+    .err { color: var(--bad); }
+    .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #223; color: var(--accent2); font-size: 12px; }
+    a { color: #9db6ff; }
   </style>
 </head>
 <body>
-  <h1>AlignDocs</h1>
-  <p>Studio Next (chain 61997). Submit URLs, resolve a case, read the on-chain verdict here.</p>
-  <p>Contract: <code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
-  <button id="connect">Connect wallet</button>
-  <p id="status"></p>
-  <h2>Submit</h2>
-  <label>article_url</label>
-  <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
-  <label>docs_url</label>
-  <input id="docs" value="https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer" />
-  <button id="submitBtn">submit()</button>
-  <h2>Resolve + verdict</h2>
-  <label>case id</label>
-  <input id="caseId" value="0" />
-  <button id="resolveBtn">resolve(id)</button>
-  <button id="readBtn">get_case(id)</button>
-  <button id="listBtn">list_resolved()</button>
-  <pre id="out"></pre>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="logo">Align<span>Docs</span></div>
+        <p class="sub">
+          So sánh một bài viết công khai với docs chính thức của GenLayer.
+          Contract ghi nhãn on-chain: <b>aligned</b>, <b>contradicts</b>, <b>outdated</b>, <b>off_topic</b>.
+        </p>
+      </div>
+      <div class="wallet">
+        <b>Ví / mạng</b>
+        <div id="status" style="margin:8px 0 10px;font-size:13px;color:var(--muted)">Chưa kết nối</div>
+        <button id="connect">Kết nối ví</button>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><b>1. Gửi cặp URL</b>Bài viết + trang docs chính thức</div>
+      <div class="step"><b>2. Resolve</b>Validator xử lý case và ghi nhãn</div>
+      <div class="step"><b>3. Đọc verdict</b>Xem kết quả ngay trong app</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Gửi case mới</h2>
+        <p class="hint">
+          <span class="pill">docs_url</span> phải thuộc docs.genlayer.com, genlayer.com hoặc portal.genlayer.foundation.
+          <span class="pill">article_url</span> là bài cộng đồng, không phải docs gốc.
+        </p>
+        <label>Bài viết cần kiểm (article_url)</label>
+        <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
+        <label>Docs chính thức (docs_url)</label>
+        <input id="docs" value="https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer" />
+        <div class="row">
+          <button id="submitBtn">1. Submit cặp URL</button>
+        </div>
+        <label>Case ID</label>
+        <input id="caseId" value="0" />
+        <div class="row">
+          <button id="resolveBtn">2. Resolve case</button>
+          <button class="ghost" id="readBtn">3. Đọc verdict</button>
+          <button class="ghost" id="listBtn">Danh sách đã resolve</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Kết quả on-chain</h2>
+        <p class="hint">Contract Studio Next 61997<br><code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
+        <pre id="out">Bấm Submit → Resolve → Đọc verdict.</pre>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { createClient } from "genlayer-js";
 
     const CONTRACT = "0x3681aC016717f269D1bF1D6347816D027A6148FC";
-    const CHAIN = {
+    const FALLBACK_CHAIN = {
       id: 61997,
       name: "GenLayer Studio Next",
       rpcUrls: { default: { http: ["https://studio-next.genlayer.com/api"] } },
@@ -50,18 +137,31 @@
     };
 
     let client;
+    let account;
     const out = document.getElementById("out");
     const status = document.getElementById("status");
-    const log = (x) => { out.textContent = typeof x === "string" ? x : JSON.stringify(x, null, 2); };
+    const log = (x, cls) => {
+      out.className = cls || "";
+      out.textContent = typeof x === "string" ? x : JSON.stringify(x, (_, v) => typeof v === "bigint" ? v.toString() : v, 2);
+    };
+    const busy = (on) => {
+      for (const id of ["submitBtn", "resolveBtn", "readBtn", "listBtn", "connect"]) {
+        document.getElementById(id).disabled = on;
+      }
+    };
 
-    async function ready() {
-      if (!window.ethereum) throw new Error("Install MetaMask in this browser");
-      const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
+    async function chainDef() {
       try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0xF20D" }],
-        });
+        const chains = await import("genlayer-js/chains");
+        return chains.studioDevnet || chains.studioNext || FALLBACK_CHAIN;
+      } catch {
+        return FALLBACK_CHAIN;
+      }
+    }
+
+    async function addNetwork() {
+      try {
+        await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0xF20D" }] });
       } catch (e) {
         if (e.code === 4902) {
           await window.ethereum.request({
@@ -73,84 +173,117 @@
               rpcUrls: ["https://studio-next.genlayer.com/api"],
             }],
           });
-        } else {
+        } else if (e.code !== 4001) {
           throw e;
         }
       }
-      client = createClient({ chain: CHAIN, account, provider: window.ethereum });
-      status.textContent = "Connected " + account + " @ 61997";
+    }
+
+    async function ready() {
+      if (!window.ethereum) throw new Error("Cài MetaMask trên trình duyệt này");
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      account = accounts[0];
+      await addNetwork();
+      const chain = await chainDef();
+      client = createClient({ chain, account, provider: window.ethereum });
+      try { await client.connect("studio-dev"); } catch (_) {}
+      status.innerHTML = '<span class="ok">Đã kết nối</span><br>' + account.slice(0, 6) + "…" + account.slice(-4) + " · chain 61997";
       return client;
     }
 
-    document.getElementById("connect").onclick = () =>
-      ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
+    function caseIdArg() {
+      const raw = document.getElementById("caseId").value.trim() || "0";
+      return BigInt(raw);
+    }
+
+    async function withFees(write) {
+      const payload = { ...write };
+      try {
+        const estimate = await client.estimateTransactionFeesForWrite(write);
+        if (estimate && estimate.feeValue != null && estimate.distribution) {
+          payload.fees = {
+            distribution: estimate.distribution,
+            feeValue: estimate.feeValue,
+          };
+          if (estimate.messageAllocations) payload.fees.messageAllocations = estimate.messageAllocations;
+        }
+      } catch (e) {
+        try {
+          const estimate = await client.estimateTransactionFees({
+            leaderTimeunitsAllocation: 125n,
+            validatorTimeunitsAllocation: 250n,
+            executionBudgetPerRound: 786500n,
+            totalMessageFees: 0n,
+            appealRounds: 1n,
+            rotations: [1n, 1n],
+          });
+          if (estimate && estimate.feeValue != null) {
+            payload.fees = { distribution: estimate.distribution, feeValue: estimate.feeValue };
+          }
+        } catch (_) {}
+      }
+      return payload;
+    }
+
+    async function sendWrite(functionName, args) {
+      const c = client || await ready();
+      const write = { address: CONTRACT, functionName, args };
+      const payload = await withFees(write);
+      const txId = await c.writeContract(payload);
+      log({ status: "Đã gửi tx, đang chờ…", txId });
+      await c.waitForDecision({ hash: txId }).catch(() => {});
+      return txId;
+    }
+
+    document.getElementById("connect").onclick = () => ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
 
     document.getElementById("submitBtn").onclick = async () => {
+      busy(true);
       try {
-        const c = client || await ready();
-        const write = {
-          address: CONTRACT,
-          functionName: "submit",
-          args: [
-            document.getElementById("article").value.trim(),
-            document.getElementById("docs").value.trim(),
-          ],
-        };
-        let payload = write;
+        const article = document.getElementById("article").value.trim();
+        const docs = document.getElementById("docs").value.trim();
+        const txId = await sendWrite("submit", [article, docs]);
+        let nextId = document.getElementById("caseId").value.trim();
         try {
-          const estimate = await c.estimateTransactionFeesForWrite(write);
-          payload = { ...write, fees: { distribution: estimate.distribution, feeValue: estimate.feeValue } };
+          const count = await client.readContract({ address: CONTRACT, functionName: "case_count", args: [] });
+          const n = Number(count);
+          if (Number.isFinite(n) && n > 0) {
+            document.getElementById("caseId").value = String(n - 1);
+            nextId = String(n - 1);
+          }
         } catch (_) {}
-        const txId = await c.writeContract(payload);
-        await c.waitForFinalization({ hash: txId }).catch(() => {});
-        log({ submitted: txId });
-      } catch (e) { log(String(e)); }
+        log({ ok: "Đã submit. Bấm Resolve cho case " + nextId, txId });
+      } catch (e) { log(e.message || String(e), "err"); }
+      busy(false);
     };
 
     document.getElementById("resolveBtn").onclick = async () => {
+      busy(true);
       try {
-        const c = client || await ready();
-        const write = {
-          address: CONTRACT,
-          functionName: "resolve",
-          args: [document.getElementById("caseId").value.trim()],
-        };
-        let payload = write;
-        try {
-          const estimate = await c.estimateTransactionFeesForWrite(write);
-          payload = { ...write, fees: { distribution: estimate.distribution, feeValue: estimate.feeValue } };
-        } catch (_) {}
-        const txId = await c.writeContract(payload);
-        await c.waitForFinalization({ hash: txId }).catch(() => {});
-        const verdict = await c.readContract({
-          address: CONTRACT,
-          functionName: "get_case",
-          args: [document.getElementById("caseId").value.trim()],
-        });
-        log({ resolved: txId, verdict });
-      } catch (e) { log(String(e)); }
+        const id = caseIdArg();
+        const txId = await sendWrite("resolve", [id]);
+        const verdict = await client.readContract({ address: CONTRACT, functionName: "get_case", args: [id] });
+        log({ ok: "Đã resolve", txId, verdict });
+      } catch (e) { log(e.message || String(e), "err"); }
+      busy(false);
     };
 
     document.getElementById("readBtn").onclick = async () => {
+      busy(true);
       try {
         const c = client || await ready();
-        log(await c.readContract({
-          address: CONTRACT,
-          functionName: "get_case",
-          args: [document.getElementById("caseId").value.trim()],
-        }));
-      } catch (e) { log(String(e)); }
+        log(await c.readContract({ address: CONTRACT, functionName: "get_case", args: [caseIdArg()] }));
+      } catch (e) { log(e.message || String(e), "err"); }
+      busy(false);
     };
 
     document.getElementById("listBtn").onclick = async () => {
+      busy(true);
       try {
         const c = client || await ready();
-        log(await c.readContract({
-          address: CONTRACT,
-          functionName: "list_resolved",
-          args: [],
-        }));
-      } catch (e) { log(String(e)); }
+        log(await c.readContract({ address: CONTRACT, functionName: "list_resolved", args: [] }));
+      } catch (e) { log(e.message || String(e), "err"); }
+      busy(false);
     };
   </script>
 </body>
