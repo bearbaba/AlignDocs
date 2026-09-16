@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -77,49 +77,49 @@
       <div>
         <div class="logo">Align<span>Docs</span></div>
         <p class="sub">
-          So sánh một bài viết công khai với docs chính thức của GenLayer.
-          Contract ghi nhãn on-chain: <b>aligned</b>, <b>contradicts</b>, <b>outdated</b>, <b>off_topic</b>.
+          Compare a public article with official GenLayer docs.
+          The contract stores one on-chain label: <b>aligned</b>, <b>contradicts</b>, <b>outdated</b>, or <b>off_topic</b>.
         </p>
       </div>
       <div class="wallet">
-        <b>Ví / mạng</b>
-        <div id="status" style="margin:8px 0 10px;font-size:13px;color:var(--muted)">Chưa kết nối</div>
-        <button id="connect">Kết nối ví</button>
+        <b>Wallet / network</b>
+        <div id="status" style="margin:8px 0 10px;font-size:13px;color:var(--muted)">Not connected</div>
+        <button id="connect">Connect wallet</button>
       </div>
     </div>
 
     <div class="steps">
-      <div class="step"><b>1. Gửi cặp URL</b>Bài viết + trang docs chính thức</div>
-      <div class="step"><b>2. Resolve</b>Validator xử lý case và ghi nhãn</div>
-      <div class="step"><b>3. Đọc verdict</b>Xem kết quả ngay trong app</div>
+      <div class="step"><b>1. Submit URLs</b>Community article + official docs</div>
+      <div class="step"><b>2. Resolve</b>Validators label the case</div>
+      <div class="step"><b>3. Read verdict</b>See the result in this app</div>
     </div>
 
     <div class="grid">
       <div class="card">
-        <h2>Gửi case mới</h2>
+        <h2>New case</h2>
         <p class="hint">
-          <span class="pill">docs_url</span> phải thuộc docs.genlayer.com, genlayer.com hoặc portal.genlayer.foundation.
-          <span class="pill">article_url</span> là bài cộng đồng, không phải docs gốc.
+          <span class="pill">docs_url</span> must be docs.genlayer.com, genlayer.com, or portal.genlayer.foundation.
+          <span class="pill">article_url</span> must be community text, not official docs.
         </p>
-        <label>Bài viết cần kiểm (article_url)</label>
+        <label>Article URL</label>
         <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
-        <label>Docs chính thức (docs_url)</label>
+        <label>Official docs URL</label>
         <input id="docs" value="https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer" />
         <div class="row">
-          <button id="submitBtn">1. Submit cặp URL</button>
+          <button id="submitBtn">1. Submit pair</button>
         </div>
         <label>Case ID</label>
         <input id="caseId" value="0" />
         <div class="row">
           <button id="resolveBtn">2. Resolve case</button>
-          <button class="ghost" id="readBtn">3. Đọc verdict</button>
-          <button class="ghost" id="listBtn">Danh sách đã resolve</button>
+          <button class="ghost" id="readBtn">3. Read verdict</button>
+          <button class="ghost" id="listBtn">Resolved list</button>
         </div>
       </div>
       <div class="card">
-        <h2>Kết quả on-chain</h2>
-        <p class="hint">Contract Studio Next 61997<br><code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
-        <pre id="out">Bấm Submit → Resolve → Đọc verdict.</pre>
+        <h2>On-chain result</h2>
+        <p class="hint">Studio Next contract · chain 61997<br><code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
+        <pre id="out">Submit → Resolve → Read verdict.</pre>
       </div>
     </div>
   </div>
@@ -149,7 +149,7 @@
     };
 
     async function ready() {
-      if (!window.ethereum) throw new Error("Cài MetaMask trên trình duyệt này");
+      if (!window.ethereum) throw new Error("Install MetaMask in this browser");
       const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
       try {
         await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0xF20D" }] });
@@ -168,7 +168,7 @@
       }
       client = createClient({ chain, account, provider: window.ethereum });
       try { await client.connect("studio-dev"); } catch (_) {}
-      status.innerHTML = '<span class="ok">Đã kết nối</span><br>' + account.slice(0, 6) + "…" + account.slice(-4) + " · chain 61997";
+      status.innerHTML = '<span class="ok">Connected</span><br>' + account.slice(0, 6) + "…" + account.slice(-4) + " · chain 61997";
       return client;
     }
 
@@ -205,7 +205,7 @@
           const n = Number(count);
           if (n > 0) document.getElementById("caseId").value = String(n - 1);
         } catch (_) {}
-        log({ ok: "Đã submit", txId, caseId: document.getElementById("caseId").value });
+        log({ ok: "Submitted", txId, caseId: document.getElementById("caseId").value });
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
     };
@@ -216,7 +216,7 @@
         const id = caseIdArg();
         const txId = await sendWrite("resolve", [id]);
         const verdict = await client.readContract({ address: CONTRACT, functionName: "get_case", args: [id] });
-        log({ ok: "Đã resolve", txId, verdict });
+        log({ ok: "Resolved", txId, verdict });
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
     };
