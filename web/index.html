@@ -103,6 +103,9 @@
         </p>
         <label>Article URL</label>
         <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
+        <div class="row">
+          <button class="ghost" id="toRaw" type="button">GitHub link → raw</button>
+        </div>
         <label>Official docs URL</label>
         <input id="docs" value="https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer" />
         <div class="row">
@@ -118,7 +121,7 @@
       </div>
       <div class="card">
         <h2>On-chain result</h2>
-        <p class="hint">Studio Next contract · chain 61997<br><code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
+        <p class="hint">Studio Next contract · chain 61997 (0xF22D)<br><code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
         <pre id="out">Submit → Resolve → Read verdict.</pre>
       </div>
     </div>
@@ -129,12 +132,15 @@
     import * as chains from "genlayer-js/chains";
 
     const CONTRACT = "0x3681aC016717f269D1bF1D6347816D027A6148FC";
+    const CHAIN_ID = 61997;
+    const CHAIN_HEX = "0xF22D";
+    const RPC = "https://studio-next.genlayer.com/api";
     const base = chains.studioDevnet || chains.studioNext || chains.studionet || chains.localnet;
     const chain = {
       ...base,
-      id: 61997,
+      id: CHAIN_ID,
       name: "GenLayer Studio Next",
-      rpcUrls: { default: { http: ["https://studio-dev.genlayer.com/api"] } },
+      rpcUrls: { default: { http: [RPC] } },
     };
 
     let client;
@@ -157,19 +163,19 @@
     };
 
     async function ready() {
-      if (!window.ethereum) throw new Error("Install MetaMask in this browser");
+      if (!window.ethereum) throw new Error("Install MetaMask or Rabby in this browser");
       const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
       try {
-        await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0xF20D" }] });
+        await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] });
       } catch (e) {
         if (e.code === 4902) {
           await window.ethereum.request({
             method: "wallet_addEthereumChain",
             params: [{
-              chainId: "0xF20D",
+              chainId: CHAIN_HEX,
               chainName: "GenLayer Studio Next",
               nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-              rpcUrls: ["https://studio-dev.genlayer.com/api"],
+              rpcUrls: [RPC],
             }],
           });
         }
@@ -200,6 +206,13 @@
 
     connectBtn.onclick = () =>
       ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
+
+    document.getElementById("toRaw").onclick = () => {
+      const el = document.getElementById("article");
+      el.value = el.value.trim()
+        .replace("https://github.com/", "https://raw.githubusercontent.com/")
+        .replace("/blob/", "/");
+    };
 
     document.getElementById("submitBtn").onclick = async () => {
       busy(true);
