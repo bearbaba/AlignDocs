@@ -1,18 +1,23 @@
 # AlignDocs
 
-Compare a public article against official GenLayer docs.
-The contract stores one on-chain label: aligned, contradicts, outdated, off_topic.
+Compare a community article to official GenLayer docs.
+`resolve` fetches both pages and stores one label: aligned, contradicts, outdated, off_topic.
 
-## Live (Studio Next, chain 61997)
+## Live (Studio Next, chain 61997 / 0xF22D)
 
 - App: https://bearbaba.github.io/AlignDocs/
-- Contract: `0x3681aC016717f269D1bF1D6347816D027A6148FC`
-- Studio: https://studio-next.genlayer.com/?import-contract=0x3681aC016717f269D1bF1D6347816D027A6148FC
+- Contract: `0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d`
+- Studio: https://studio-next.genlayer.com/?import-contract=0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d
 
-Demo case 0: `aligned`, `resolved: true`.
+## Verified
 
-## How to reproduce
+| id | sample | label |
+| --- | --- | --- |
+| 0 | samples/contradicts.md | contradicts |
 
-1. Open the app and click Read verdict with case id 0.
-2. Writes: in Studio Next call `submit` then `resolve` (browser wallets on this RC reject eth_sendRawTransaction).
-3. Read `get_case` in Studio or in the app.
+## How to check
+
+1. Open Studio Next on the contract above.
+2. Call `get_case(0)` — expect `contradicts`.
+3. New cases: `submit` then `resolve` in Studio (browser wallets on this RC often reject `eth_sendRawTransaction`).
+4. The app Read button shows case 0; live writes belong in Studio.
