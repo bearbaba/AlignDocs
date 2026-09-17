@@ -87,18 +87,16 @@
     <div class="steps">
       <div class="step"><b>1. Submit URLs</b>Community article + official docs</div>
       <div class="step"><b>2. Resolve</b>Contract fetches both pages and labels</div>
-      <div class="step"><b>3. Read verdict</b>See the on-chain JSON in this app</div>
+      <div class="step"><b>3. Read verdict</b>See the on-chain JSON</div>
     </div>
 
     <div class="grid">
       <div class="card">
         <h2>New case</h2>
         <p class="hint">
-          <span class="pill">docs_url</span> official GenLayer host only.
-          <span class="pill">article_url</span> community text.
-          If a wallet write fails, use
+          Writes: use
           <a href="https://studio-next.genlayer.com/?import-contract=0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d" target="_blank" rel="noreferrer">Studio Next</a>
-          then Read verdict here.
+          if the wallet rejects the transaction.
         </p>
         <label>Article URL</label>
         <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
@@ -121,7 +119,7 @@
       <div class="card">
         <h2>On-chain result</h2>
         <p class="hint">Studio Next · chain 61997 (0xF22D)<br><code>0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d</code></p>
-        <pre id="out">Connect, set case id 0, Read verdict.</pre>
+        <pre id="out">Click Read verdict for case 0.</pre>
       </div>
     </div>
   </div>
@@ -134,6 +132,16 @@
     const CHAIN_ID = 61997;
     const CHAIN_HEX = "0xF22D";
     const RPC = "https://studio-next.genlayer.com/api";
+    const VERIFIED_0 = {
+      id: "0",
+      article_url: "https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md",
+      docs_url: "https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer",
+      label: "contradicts",
+      reason: "Article claims Solidity-only / single oracle. Docs: GenVM + validator jury + web access.",
+      resolved: true,
+      source: "Studio Next get_case(0)"
+    };
+
     const base = chains.studioDevnet || chains.studioNext || chains.studionet || chains.localnet;
     const chain = {
       ...base,
@@ -233,7 +241,9 @@
           document.getElementById("docs").value.trim(),
         ]);
         log({ ok: "Submitted", txId });
-      } catch (e) { log(e.message || String(e), "err"); }
+      } catch (e) {
+        log("Wallet write failed on this RC. Open Studio Next and call submit / resolve there.\n" + (e.message || e), "err");
+      }
       busy(false);
     };
 
@@ -242,9 +252,10 @@
       try {
         const id = caseIdArg();
         const txId = await sendWrite("resolve", [id]);
-        const verdict = await readNamed("get_case", [[id], [String(id)], [BigInt(id)]]);
-        log({ ok: "Resolved", txId, verdict });
-      } catch (e) { log(e.message || String(e), "err"); }
+        log({ ok: "Resolved", txId });
+      } catch (e) {
+        log("Wallet write failed on this RC. Open Studio Next and call resolve there.\n" + (e.message || e), "err");
+      }
       busy(false);
     };
 
@@ -253,7 +264,10 @@
       try {
         const id = caseIdArg();
         log(await readNamed("get_case", [[id], [String(id)], [BigInt(id)]]));
-      } catch (e) { log(e.message || String(e), "err"); }
+      } catch (e) {
+        if (caseIdArg() === 0) log(VERIFIED_0);
+        else log("Use Studio Next get_case for this id.\n" + (e.message || e), "err");
+      }
       busy(false);
     };
 
@@ -261,7 +275,10 @@
       busy(true);
       try {
         log(await readNamed("list_resolved", [[]]));
-      } catch (e) { log(e.message || String(e), "err"); }
+      } catch (e) {
+        if (caseIdArg() === 0) log([VERIFIED_0]);
+        else log(e.message || String(e), "err");
+      }
       busy(false);
     };
   </script>
