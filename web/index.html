@@ -96,7 +96,7 @@
         <p class="hint">
           <span class="pill">docs_url</span> official GenLayer host only.
           <span class="pill">article_url</span> community text.
-          Wallet writes may fail on this RC — use
+          If a wallet write fails, use
           <a href="https://studio-next.genlayer.com/?import-contract=0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d" target="_blank" rel="noreferrer">Studio Next</a>
           then Read verdict here.
         </p>
@@ -187,7 +187,18 @@
 
     function caseIdArg() {
       const n = Number(document.getElementById("caseId").value.trim() || "0");
-      return Number.isFinite(n) ? n : 0;
+      return Number.isFinite(n) ? Math.trunc(n) : 0;
+    }
+
+    async function readNamed(functionName, variants) {
+      const c = client || await ready();
+      let last = null;
+      for (const args of variants) {
+        try {
+          return await c.readContract({ address: CONTRACT, functionName, args });
+        } catch (e) { last = e; }
+      }
+      throw last || new Error("read failed");
     }
 
     async function sendWrite(functionName, args) {
@@ -221,12 +232,7 @@
           document.getElementById("article").value.trim(),
           document.getElementById("docs").value.trim(),
         ]);
-        try {
-          const count = await client.readContract({ address: CONTRACT, functionName: "case_count", args: [] });
-          const n = Number(count);
-          if (n > 0) document.getElementById("caseId").value = String(n - 1);
-        } catch (_) {}
-        log({ ok: "Submitted", txId, caseId: document.getElementById("caseId").value });
+        log({ ok: "Submitted", txId });
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
     };
@@ -236,7 +242,7 @@
       try {
         const id = caseIdArg();
         const txId = await sendWrite("resolve", [id]);
-        const verdict = await client.readContract({ address: CONTRACT, functionName: "get_case", args: [id] });
+        const verdict = await readNamed("get_case", [[id], [String(id)], [BigInt(id)]]);
         log({ ok: "Resolved", txId, verdict });
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
@@ -245,8 +251,8 @@
     document.getElementById("readBtn").onclick = async () => {
       busy(true);
       try {
-        const c = client || await ready();
-        log(await c.readContract({ address: CONTRACT, functionName: "get_case", args: [caseIdArg()] }));
+        const id = caseIdArg();
+        log(await readNamed("get_case", [[id], [String(id)], [BigInt(id)]]));
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
     };
@@ -254,8 +260,7 @@
     document.getElementById("listBtn").onclick = async () => {
       busy(true);
       try {
-        const c = client || await ready();
-        log(await c.readContract({ address: CONTRACT, functionName: "list_resolved", args: [] }));
+        log(await readNamed("list_resolved", [[]]));
       } catch (e) { log(e.message || String(e), "err"); }
       busy(false);
     };
