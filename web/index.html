@@ -14,14 +14,8 @@
   </script>
   <style>
     :root {
-      --bg: #0b1020;
-      --card: #141a2e;
-      --line: #2a3354;
-      --text: #eef2ff;
-      --muted: #9aa3c7;
-      --accent: #7c5cff;
-      --accent2: #2ee9a6;
-      --bad: #ff6b7a;
+      --bg: #0b1020; --card: #141a2e; --line: #2a3354; --text: #eef2ff;
+      --muted: #9aa3c7; --accent: #7c5cff; --accent2: #2ee9a6; --bad: #ff6b7a;
     }
     * { box-sizing: border-box; }
     body {
@@ -35,11 +29,11 @@
     }
     .wrap { max-width: 980px; margin: 0 auto; padding: 28px 18px 64px; }
     .top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-    .logo { font-weight: 800; letter-spacing: .3px; font-size: 28px; }
+    .logo { font-weight: 800; font-size: 28px; }
     .logo span { color: var(--accent2); }
     .sub { color: var(--muted); max-width: 640px; line-height: 1.5; margin-top: 8px; }
     .wallet { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 260px; }
-    .wallet b { display: block; font-size: 13px; color: var(--muted); font-weight: 600; }
+    .wallet b { display: block; font-size: 13px; color: var(--muted); }
     button {
       border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; cursor: pointer;
       background: linear-gradient(180deg, #8d71ff, var(--accent)); color: white;
@@ -69,6 +63,7 @@
     .err { color: var(--bad); }
     .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #223; color: var(--accent2); font-size: 12px; }
     code { font-size: 12px; word-break: break-all; }
+    a { color: #9db6ff; }
   </style>
 </head>
 <body>
@@ -78,7 +73,8 @@
         <div class="logo">Align<span>Docs</span></div>
         <p class="sub">
           Compare a public article with official GenLayer docs.
-          The contract stores one on-chain label: <b>aligned</b>, <b>contradicts</b>, <b>outdated</b>, or <b>off_topic</b>.
+          Resolve fetches both pages and stores one label:
+          <b>aligned</b>, <b>contradicts</b>, <b>outdated</b>, or <b>off_topic</b>.
         </p>
       </div>
       <div class="wallet">
@@ -90,16 +86,19 @@
 
     <div class="steps">
       <div class="step"><b>1. Submit URLs</b>Community article + official docs</div>
-      <div class="step"><b>2. Resolve</b>Validators label the case</div>
-      <div class="step"><b>3. Read verdict</b>See the result in this app</div>
+      <div class="step"><b>2. Resolve</b>Contract fetches both pages and labels</div>
+      <div class="step"><b>3. Read verdict</b>See the on-chain JSON in this app</div>
     </div>
 
     <div class="grid">
       <div class="card">
         <h2>New case</h2>
         <p class="hint">
-          <span class="pill">docs_url</span> must be docs.genlayer.com, genlayer.com, or portal.genlayer.foundation.
-          <span class="pill">article_url</span> must be community text, not official docs.
+          <span class="pill">docs_url</span> official GenLayer host only.
+          <span class="pill">article_url</span> community text.
+          Wallet writes may fail on this RC — use
+          <a href="https://studio-next.genlayer.com/?import-contract=0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d" target="_blank" rel="noreferrer">Studio Next</a>
+          then Read verdict here.
         </p>
         <label>Article URL</label>
         <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
@@ -121,8 +120,8 @@
       </div>
       <div class="card">
         <h2>On-chain result</h2>
-        <p class="hint">Studio Next contract · chain 61997 (0xF22D)<br><code>0x3681aC016717f269D1bF1D6347816D027A6148FC</code></p>
-        <pre id="out">Submit → Resolve → Read verdict.</pre>
+        <p class="hint">Studio Next · chain 61997 (0xF22D)<br><code>0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d</code></p>
+        <pre id="out">Connect, set case id 0, Read verdict.</pre>
       </div>
     </div>
   </div>
@@ -131,7 +130,7 @@
     import { createClient } from "genlayer-js";
     import * as chains from "genlayer-js/chains";
 
-    const CONTRACT = "0x3681aC016717f269D1bF1D6347816D027A6148FC";
+    const CONTRACT = "0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d";
     const CHAIN_ID = 61997;
     const CHAIN_HEX = "0xF22D";
     const RPC = "https://studio-next.genlayer.com/api";
@@ -187,7 +186,8 @@
     }
 
     function caseIdArg() {
-      return BigInt(document.getElementById("caseId").value.trim() || "0");
+      const n = Number(document.getElementById("caseId").value.trim() || "0");
+      return Number.isFinite(n) ? n : 0;
     }
 
     async function sendWrite(functionName, args) {
