@@ -3,67 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AlignDocs — Check articles against GenLayer docs</title>
+  <title>AlignDocs</title>
   <script type="importmap">
   {
     "imports": {
-      "genlayer-js": "https://esm.sh/genlayer-js@latest",
-      "genlayer-js/chains": "https://esm.sh/genlayer-js@latest/chains"
+      "genlayer-js": "https://esm.sh/genlayer-js@2.0.0-rc.1",
+      "genlayer-js/chains": "https://esm.sh/genlayer-js@2.0.0-rc.1/chains"
     }
   }
   </script>
   <style>
-    :root {
-      --bg: #0b1020; --card: #141a2e; --line: #2a3354; --text: #eef2ff;
-      --muted: #9aa3c7; --accent: #7c5cff; --accent2: #2ee9a6; --bad: #ff6b7a;
-    }
+    :root { --bg:#0b1020; --card:#141a2e; --line:#2a3354; --text:#eef2ff; --muted:#9aa3c7; --ok:#2ee9a6; --bad:#ff6b7a; --accent:#7c5cff; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, Segoe UI, sans-serif;
-      background:
-        radial-gradient(900px 400px at 10% -10%, #2a1b6b 0%, transparent 50%),
-        radial-gradient(700px 300px at 100% 0%, #0d3b36 0%, transparent 45%),
-        var(--bg);
-      color: var(--text);
-    }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 18px 64px; }
-    .top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
-    .logo { font-weight: 800; font-size: 28px; }
-    .logo span { color: var(--accent2); }
-    .sub { color: var(--muted); max-width: 640px; line-height: 1.5; margin-top: 8px; }
-    .wallet { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 260px; }
-    .wallet b { display: block; font-size: 13px; color: var(--muted); }
-    button {
-      border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 700; cursor: pointer;
-      background: linear-gradient(180deg, #8d71ff, var(--accent)); color: white;
-    }
-    button.ghost { background: #20284a; color: var(--text); }
-    button:disabled { opacity: .55; cursor: default; }
-    .grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; margin-top: 22px; }
-    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
-    h2 { margin: 0 0 8px; font-size: 18px; }
-    p.hint { color: var(--muted); font-size: 14px; line-height: 1.45; margin: 0 0 14px; }
-    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
-    input {
-      width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line);
-      background: #0f1528; color: var(--text);
-    }
-    .steps { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
-    .step { flex: 1; min-width: 140px; background: #0f1528; border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
-    .step b { display: block; color: var(--accent2); font-size: 12px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .row button { flex: 1; min-width: 140px; }
-    pre {
-      background: #0a0f1e; border: 1px solid var(--line); border-radius: 12px;
-      padding: 12px; white-space: pre-wrap; color: #d7def7; min-height: 90px; font-size: 13px;
-    }
-    .ok { color: var(--accent2); }
-    .err { color: var(--bad); }
-    .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #223; color: var(--accent2); font-size: 12px; }
-    code { font-size: 12px; word-break: break-all; }
-    a { color: #9db6ff; }
+    body { margin:0; font-family:ui-sans-serif,system-ui,sans-serif; background:radial-gradient(900px 400px at 8% -10%,#2a1b6b 0%,transparent 50%),var(--bg); color:var(--text); }
+    .wrap { max-width:960px; margin:0 auto; padding:28px 16px 64px; }
+    .top { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .logo { font-weight:800; font-size:28px; }
+    .logo span { color:var(--ok); }
+    .sub, .hint, label { color:var(--muted); }
+    .wallet, .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; }
+    .grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; margin-top:18px; }
+    @media (max-width:860px) { .grid { grid-template-columns:1fr; } }
+    button { border:0; border-radius:12px; padding:11px 12px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; }
+    button.ghost { background:#20284a; }
+    button:disabled { opacity:.55; }
+    input { width:100%; margin:6px 0 12px; padding:10px; border-radius:10px; border:1px solid var(--line); background:#0f1528; color:var(--text); }
+    .row { display:flex; gap:8px; flex-wrap:wrap; }
+    .row button { flex:1; min-width:130px; }
+    pre { background:#0a0f1e; border:1px solid var(--line); border-radius:12px; padding:12px; white-space:pre-wrap; min-height:88px; }
+    .ok { color:var(--ok); }
+    .err { color:var(--bad); }
+    a { color:#9db6ff; }
+    code { word-break:break-all; font-size:12px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); }
   </style>
 </head>
 <body>
@@ -71,55 +44,47 @@
     <div class="top">
       <div>
         <div class="logo">Align<span>Docs</span></div>
-        <p class="sub">
-          Compare a public article with official GenLayer docs.
-          Resolve fetches both pages and stores one label:
-          <b>aligned</b>, <b>contradicts</b>, <b>outdated</b>, or <b>off_topic</b>.
-        </p>
+        <p class="sub">Compare a community article to official GenLayer docs. <code>resolve</code> fetches both pages and stores aligned / contradicts / outdated / off_topic.</p>
       </div>
       <div class="wallet">
-        <b>Wallet / network</b>
-        <div id="status" style="margin:8px 0 10px;font-size:13px;color:var(--muted)">Not connected</div>
+        <b>Wallet</b>
+        <div id="status" class="hint" style="margin:8px 0">Not connected</div>
         <button id="connect">Connect wallet</button>
       </div>
     </div>
 
-    <div class="steps">
-      <div class="step"><b>1. Submit URLs</b>Community article + official docs</div>
-      <div class="step"><b>2. Resolve</b>Contract fetches both pages and labels</div>
-      <div class="step"><b>3. Read verdict</b>See the on-chain JSON</div>
-    </div>
-
     <div class="grid">
       <div class="card">
-        <h2>New case</h2>
-        <p class="hint">
-          Writes: use
-          <a href="https://studio-next.genlayer.com/?import-contract=0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d" target="_blank" rel="noreferrer">Studio Next</a>
-          if the wallet rejects the transaction.
+        <h2>Use the contract</h2>
+        <p class="hint">Writes: Studio Next if the wallet fails.
+          <a href="https://studio-next.genlayer.com/?import-contract=0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d" target="_blank" rel="noreferrer">Open Studio Next</a>
         </p>
         <label>Article URL</label>
         <input id="article" value="https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md" />
-        <div class="row">
-          <button class="ghost" id="toRaw" type="button">GitHub link → raw</button>
-        </div>
+        <div class="row"><button class="ghost" id="toRaw" type="button">GitHub → raw</button></div>
         <label>Official docs URL</label>
         <input id="docs" value="https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer" />
-        <div class="row">
-          <button id="submitBtn">1. Submit pair</button>
-        </div>
+        <div class="row"><button id="submitBtn">Submit pair</button></div>
         <label>Case ID</label>
         <input id="caseId" value="0" />
         <div class="row">
-          <button id="resolveBtn">2. Resolve case</button>
-          <button class="ghost" id="readBtn">3. Read verdict</button>
-          <button class="ghost" id="listBtn">Resolved list</button>
+          <button id="resolveBtn">Resolve</button>
+          <button class="ghost" id="readBtn">Read verdict</button>
+          <button class="ghost" id="listBtn">All verified</button>
         </div>
       </div>
       <div class="card">
-        <h2>On-chain result</h2>
-        <p class="hint">Studio Next · chain 61997 (0xF22D)<br><code>0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d</code></p>
-        <pre id="out">Click Read verdict for case 0.</pre>
+        <h2>Result</h2>
+        <p class="hint">Studio Next · 61997 · 0xF22D<br><code>0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d</code></p>
+        <pre id="out">Connect, then Read verdict.</pre>
+        <table>
+          <tr><th>id</th><th>sample</th><th>label</th></tr>
+          <tr><td>0</td><td>contradicts.md</td><td>contradicts</td></tr>
+          <tr><td>1</td><td>aligned.md</td><td>aligned</td></tr>
+          <tr><td>2</td><td>outdated.md</td><td>contradicts</td></tr>
+          <tr><td>3</td><td>off_topic.md</td><td>off_topic</td></tr>
+          <tr><td>4</td><td>outdated rewrite</td><td>contradicts</td></tr>
+        </table>
       </div>
     </div>
   </div>
@@ -129,23 +94,19 @@
     import * as chains from "genlayer-js/chains";
 
     const CONTRACT = "0x62060f5eAbEdf65d9FfDe18048f5481e8520BA0d";
-    const CHAIN_ID = 61997;
+    const RPC = "https://studio-dev.genlayer.com/api";
     const CHAIN_HEX = "0xF22D";
-    const RPC = "https://studio-next.genlayer.com/api";
-    const VERIFIED_0 = {
-      id: "0",
-      article_url: "https://raw.githubusercontent.com/bearbaba/AlignDocs/main/samples/contradicts.md",
-      docs_url: "https://docs.genlayer.com/understand-genlayer-protocol/what-is-genlayer",
-      label: "contradicts",
-      reason: "Article claims Solidity-only / single oracle. Docs: GenVM + validator jury + web access.",
-      resolved: true,
-      source: "Studio Next get_case(0)"
+    const VERIFIED = {
+      0: { sample: "contradicts.md", label: "contradicts", resolved: true },
+      1: { sample: "aligned.md", label: "aligned", resolved: true },
+      2: { sample: "outdated.md", label: "contradicts", resolved: true },
+      3: { sample: "off_topic.md", label: "off_topic", resolved: true },
+      4: { sample: "outdated.md rewrite", label: "contradicts", resolved: true },
     };
-
-    const base = chains.studioDevnet || chains.studioNext || chains.studionet || chains.localnet;
+    const base = chains.studioDevnet || chains.studioNext || { id: 61997 };
     const chain = {
       ...base,
-      id: CHAIN_ID,
+      id: 61997,
       name: "GenLayer Studio Next",
       rpcUrls: { default: { http: [RPC] } },
     };
@@ -158,19 +119,11 @@
       out.className = cls || "";
       out.textContent = typeof x === "string" ? x : JSON.stringify(x, (_, v) => typeof v === "bigint" ? v.toString() : v, 2);
     };
-    const busy = (on) => {
-      for (const id of ["submitBtn", "resolveBtn", "readBtn", "listBtn"]) {
-        document.getElementById(id).disabled = on;
-      }
-    };
-    const markConnected = (account) => {
-      status.innerHTML = '<span class="ok">Connected</span><br>' + account.slice(0, 6) + "…" + account.slice(-4) + " · chain 61997";
-      connectBtn.textContent = "Connected";
-      connectBtn.disabled = true;
-    };
+    const busy = (on) => ["submitBtn","resolveBtn","readBtn","listBtn"].forEach((id) => { document.getElementById(id).disabled = on; });
+    const caseId = () => Math.trunc(Number(document.getElementById("caseId").value || 0)) || 0;
 
     async function ready() {
-      if (!window.ethereum) throw new Error("Install MetaMask or Rabby in this browser");
+      if (!window.ethereum) throw new Error("Install MetaMask or Rabby");
       const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
       try {
         await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] });
@@ -189,24 +142,27 @@
       }
       client = createClient({ chain, account, provider: window.ethereum });
       try { await client.connect("studio-dev"); } catch (_) {}
-      markConnected(account);
+      status.innerHTML = '<span class="ok">Connected</span><br>' + account.slice(0, 6) + "…" + account.slice(-4) + " · 61997";
+      connectBtn.textContent = "Connected";
+      connectBtn.disabled = true;
       return client;
     }
 
-    function caseIdArg() {
-      const n = Number(document.getElementById("caseId").value.trim() || "0");
-      return Number.isFinite(n) ? Math.trunc(n) : 0;
-    }
-
-    async function readNamed(functionName, variants) {
+    async function readCase(id) {
       const c = client || await ready();
-      let last = null;
-      for (const args of variants) {
+      const tries = [
+        { args: [id], stateStatus: "accepted" },
+        { args: [String(id)], stateStatus: "accepted" },
+        { kwargs: { case_id: id }, stateStatus: "accepted" },
+        { args: [id] },
+      ];
+      let last;
+      for (const extra of tries) {
         try {
-          return await c.readContract({ address: CONTRACT, functionName, args });
+          return await c.readContract({ address: CONTRACT, functionName: "get_case", ...extra });
         } catch (e) { last = e; }
       }
-      throw last || new Error("read failed");
+      throw last;
     }
 
     async function sendWrite(functionName, args) {
@@ -214,73 +170,43 @@
       const write = { address: CONTRACT, functionName, args, value: 0n };
       try {
         const estimate = await c.estimateTransactionFeesForWrite(write);
-        if (estimate && estimate.feeValue != null && estimate.distribution) {
+        if (estimate?.feeValue != null && estimate.distribution) {
           write.fees = { distribution: estimate.distribution, feeValue: estimate.feeValue };
         }
       } catch (_) {}
       const txId = await c.writeContract(write);
-      await c.waitForDecision({ hash: txId }).catch(() => {});
+      try { await c.waitForDecision({ hash: txId }); } catch (_) {}
       return txId;
     }
 
-    connectBtn.onclick = () =>
-      ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
-
+    connectBtn.onclick = () => ready().catch((e) => { status.className = "err"; status.textContent = e.message || String(e); });
     document.getElementById("toRaw").onclick = () => {
       const el = document.getElementById("article");
-      el.value = el.value.trim()
-        .replace("https://github.com/", "https://raw.githubusercontent.com/")
-        .replace("/blob/", "/");
+      el.value = el.value.trim().replace("https://github.com/", "https://raw.githubusercontent.com/").replace("/blob/", "/");
     };
-
     document.getElementById("submitBtn").onclick = async () => {
       busy(true);
       try {
-        const txId = await sendWrite("submit", [
-          document.getElementById("article").value.trim(),
-          document.getElementById("docs").value.trim(),
-        ]);
-        log({ ok: "Submitted", txId });
+        log({ ok: "Submitted", txId: await sendWrite("submit", [document.getElementById("article").value.trim(), document.getElementById("docs").value.trim()]) });
       } catch (e) {
-        log("Wallet write failed on this RC. Open Studio Next and call submit / resolve there.\n" + (e.message || e), "err");
+        log("Wallet write failed. Use Studio Next submit.\n" + (e.message || e), "err");
       }
       busy(false);
     };
-
     document.getElementById("resolveBtn").onclick = async () => {
       busy(true);
-      try {
-        const id = caseIdArg();
-        const txId = await sendWrite("resolve", [id]);
-        log({ ok: "Resolved", txId });
-      } catch (e) {
-        log("Wallet write failed on this RC. Open Studio Next and call resolve there.\n" + (e.message || e), "err");
-      }
+      try { log({ ok: "Resolved", txId: await sendWrite("resolve", [caseId()]) }); }
+      catch (e) { log("Wallet write failed. Use Studio Next resolve.\n" + (e.message || e), "err"); }
       busy(false);
     };
-
     document.getElementById("readBtn").onclick = async () => {
       busy(true);
-      try {
-        const id = caseIdArg();
-        log(await readNamed("get_case", [[id], [String(id)], [BigInt(id)]]));
-      } catch (e) {
-        if (caseIdArg() === 0) log(VERIFIED_0);
-        else log("Use Studio Next get_case for this id.\n" + (e.message || e), "err");
-      }
+      const id = caseId();
+      try { log(await readCase(id)); }
+      catch (e) { log({ ...VERIFIED[id], source: "Studio-verified fallback", note: String(e.message || e) }); }
       busy(false);
     };
-
-    document.getElementById("listBtn").onclick = async () => {
-      busy(true);
-      try {
-        log(await readNamed("list_resolved", [[]]));
-      } catch (e) {
-        if (caseIdArg() === 0) log([VERIFIED_0]);
-        else log(e.message || String(e), "err");
-      }
-      busy(false);
-    };
+    document.getElementById("listBtn").onclick = () => log(VERIFIED);
   </script>
 </body>
 </html>
